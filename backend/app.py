@@ -20,3 +20,10 @@ def get_teams():
                 "defense_rating": float(row["defense_rating"])
             })
     return teams
+@app.get("/predict")
+def predict(team1: str, team2: str):
+    return {
+        "match": f"{team1} vs {team2}",
+        "prediction": "Team1 win",
+        "confidence": 0.65
+    }
