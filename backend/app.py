@@ -10,7 +10,7 @@ def home():
 @app.get("/teams")
 def get_teams():
     teams = []
-    with open("backend/data/teams.csv", newline='', encoding='utf-8') as csvfile:
+    with open("data/teams.csv", newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             teams.append({
