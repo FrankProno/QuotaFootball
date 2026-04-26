@@ -19,7 +19,7 @@ async function predict() {
   const t1 = document.getElementById("team1").value;
   const t2 = document.getElementById("team2").value;
 
-  const res = await fetch(`https://TUO-LINK.railway.app/predict?team1=${t1}&team2=${t2}`);
+  const res = await fetch(`https://quotacalcio-produzione.up.railway.app/predict?team1=${t1}&team2=${t2}`);
   const data = await res.json();
 
   document.getElementById("result").innerText =
