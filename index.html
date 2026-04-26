@@ -1,3 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QuotaFootball</title>
+</head>
+<body>
+
+<h1>QuotaFootball ⚽</h1>
+
+<select id="team1"></select>
+<select id="team2"></select>
+
+<button onclick="predict()">Predici</button>
+
+<p id="result"></p>
+
 <script>
 const API_URL = "https://quotafootball-production.up.railway.app";
 
@@ -47,3 +63,6 @@ async function predict() {
 
 loadTeams();
 </script>
+
+</body>
+</html>
