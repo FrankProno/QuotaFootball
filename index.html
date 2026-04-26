@@ -1,62 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>QuotaFootball</title>
-</head>
-<body>
-
-<h1>QuotaFootball ⚽</h1>
-
-<!-- MENU A TENDINA -->
-<select id="team1">
-    <option value="Inter">Inter</option>
-    <option value="Juventus">Juventus</option>
-    <option value="Milan">Milan</option>
-    <option value="Napoli">Napoli</option>
-    <option value="Roma">Roma</option>
-    <option value="Lazio">Lazio</option>
-    <option value="Atalanta">Atalanta</option>
-    <option value="Fiorentina">Fiorentina</option>
-</select>
-
-<select id="team2">
-    <option value="Inter">Inter</option>
-    <option value="Juventus">Juventus</option>
-    <option value="Milan">Milan</option>
-    <option value="Napoli">Napoli</option>
-    <option value="Roma">Roma</option>
-    <option value="Lazio">Lazio</option>
-    <option value="Atalanta">Atalanta</option>
-    <option value="Fiorentina">Fiorentina</option>
-</select>
-
-<br><br>
-
-<button onclick="predict()">Predici</button>
-
-<div id="result"></div>
-
 <script>
-function predict() {
-    const team1 = document.getElementById("team1").value;
-    const team2 = document.getElementById("team2").value;
+const API_URL = "https://quotafootball-production.up.railway.app";
 
-    fetch("https://quotafootball-production.up.railway.app/predict?team1=" 
-+ team1 + "&team2=" + team2)
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("result").innerHTML = `
-                <h3>${data.match}</h3>
-                <p>Prediction: ${data.prediction}</p>
-                <p>Confidence: ${data.confidence}</p>
-            `;
-        })
-        .catch(error => {
-            document.getElementById("result").innerHTML = "Errore nel collegamento API";
-            console.error(error);
-        });
+async function loadTeams() {
+  try {
+    const response = await fetch(API_URL + "/teams");
+    const teams = await response.json();
+
+    const team1Select = document.getElementById("team1");
+    const team2Select = document.getElementById("team2");
+
+    teams.forEach(team => {
+      const option1 = document.createElement("option");
+      option1.value = team.name;
+      option1.text = team.name;
+
+      const option2 = document.createElement("option");
+      option2.value = team.name;
+      option2.text = team.name;
+
+      team1Select.appendChild(option1);
+      team2Select.appendChild(option2);
+    });
+
+  } catch (error) {
+    document.getElementById("result").innerText = "Errore caricamento squadre";
+  }
 }
-</script>
 
-</body>
-</html>
+async function predict() {
+  const team1 = document.getElementById("team1").value;
+  const team2 = document.getElementById("team2").value;
+
+  try {
+    const response = await fetch(
+      API_URL + "/predict?team1=" + team1 + "&team2=" + team2
+    );
+
+    const data = await response.json();
+
+    document.getElementById("result").innerText =
+      data.match + " → " + data.prediction + " (" + data.confidence + ")";
+  } catch (error) {
+    document.getElementById("result").innerText = "Errore nel collegamento API";
+  }
+}
+
+loadTeams();
+</script>
