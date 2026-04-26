@@ -41,7 +41,8 @@ function predict() {
     const team1 = document.getElementById("team1").value;
     const team2 = document.getElementById("team2").value;
 
-    fetch(`https://quotacalcio-produzione.up.railway.app/predict?team1=${team1}&team2=${team2}`)
+    fetch("https://TUO-LINK-RAILWAY.up.railway.app/predict?team1=" 
++ team1 + "&team2=" + team2)
         .then(response => response.json())
         .then(data => {
             document.getElementById("result").innerHTML = `
