@@ -10,7 +10,7 @@ def home():
 @app.get("/teams")
 def get_teams():
     teams = []
-    with open("data/teams.csv", newline='', encoding='utf-8') as csvfile:
+    with open("backend/data/teams.csv", newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             teams.append({
@@ -20,6 +20,7 @@ def get_teams():
                 "defense_rating": float(row["defense_rating"])
             })
     return teams
+
 @app.get("/predict")
 def predict(team1: str, team2: str):
     return {
