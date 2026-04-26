@@ -6,7 +6,7 @@ app = FastAPI()
 # funzione per leggere squadre
 def load_teams():
     teams = []
-    with open("backend/data/teams.csv", newline='') as csvfile:
+    with open("data/teams.csv", newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             teams.append({
