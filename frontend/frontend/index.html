@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QuotaFootball</title>
+</head>
+<body>
+
+<h1>QuotaFootball ⚽</h1>
+
+<input id="team1" placeholder="Squadra 1">
+<input id="team2" placeholder="Squadra 2">
+
+<button onclick="predict()">Predici</button>
+
+<p id="result"></p>
+
+<script>
+async function predict() {
+  const t1 = document.getElementById("team1").value;
+  const t2 = document.getElementById("team2").value;
+
+  const res = await fetch(`https://TUO-LINK.railway.app/predict?team1=${t1}&team2=${t2}`);
+  const data = await res.json();
+
+  document.getElementById("result").innerText =
+    data.prediction + " (" + data.confidence + ")";
+}
+</script>
+
+</body>
+</html>
