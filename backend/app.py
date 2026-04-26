@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-import pandas as pd
+import csv
 
 app = FastAPI()
 
@@ -9,5 +9,14 @@ def home():
 
 @app.get("/teams")
 def get_teams():
-    df = pd.read_csv("data/teams.csv")
-    return df.to_dict(orient="records")
+    teams = []
+    with open("backend/data/teams.csv", newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            teams.append({
+                "id": int(row["id"]),
+                "name": row["name"],
+                "attack_rating": float(row["attack_rating"]),
+                "defense_rating": float(row["defense_rating"])
+            })
+    return teams
