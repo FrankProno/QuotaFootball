@@ -19,17 +19,27 @@
 <script>
 const API_URL = "https://quotafootball-production.up.railway.app";
 
+// LOGHI
 const logos = {
   "Bet365": "https://upload.wikimedia.org/wikipedia/en/6/6b/Bet365_logo.svg",
   "William Hill": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/William_Hill_logo.svg/512px-William_Hill_logo.svg.png",
-  "Betfair": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Betfair_logo.svg/512px-Betfair_logo.svg.png",
-  "Unibet": "https://upload.wikimedia.org/wikipedia/en/thumb/1/1b/Unibet_logo.svg/512px-Unibet_logo.svg.png"
+  "Betfair": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Betfair_logo.svg/512px-Betfair_logo.svg.png"
 };
 
+// 🔥 FUNZIONE CARICAMENTO SQUADRE (FIXATA)
 async function loadTeams() {
   try {
+    console.log("Carico squadre...");
+
     const res = await fetch(API_URL + "/teams");
+
+    if (!res.ok) {
+      throw new Error("Errore API");
+    }
+
     const teams = await res.json();
+
+    console.log("Teams:", teams);
 
     const t1 = document.getElementById("team1");
     const t2 = document.getElementById("team2");
@@ -38,17 +48,25 @@ async function loadTeams() {
     t2.innerHTML = "";
 
     teams.forEach(team => {
-      let opt1 = new Option(team, team);
-      let opt2 = new Option(team, team);
-      t1.add(opt1);
-      t2.add(opt2);
+      let opt1 = document.createElement("option");
+      opt1.value = team;
+      opt1.textContent = team;
+
+      let opt2 = document.createElement("option");
+      opt2.value = team;
+      opt2.textContent = team;
+
+      t1.appendChild(opt1);
+      t2.appendChild(opt2);
     });
 
   } catch (err) {
+    console.error(err);
     document.getElementById("result").innerText = "Errore caricamento squadre";
   }
 }
 
+// 🔥 FUNZIONE QUOTE
 async function getOdds() {
   const team1 = document.getElementById("team1").value;
   const team2 = document.getElementById("team2").value;
@@ -84,6 +102,7 @@ async function getOdds() {
   }
 }
 
+// AVVIO
 loadTeams();
 </script>
 
