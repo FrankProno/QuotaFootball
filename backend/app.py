@@ -1,12 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import csv
-import math
-import random
+import requests
 
 app = FastAPI()
 
-# ✅ CORS (fondamentale per GitHub Pages)
+# CORS per GitHub Pages
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,6 +13,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ⚠️ CAMBIA QUESTA DOPO
+API_KEY = "f84e543d890f114b97d7e972b08a4c3b"
 
 @app.get("/")
 def home():
@@ -25,69 +27,34 @@ def get_teams():
     with open("data/teams.csv", newline='', encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            teams.append({
-                "id": int(row["id"]),
-                "name": row["name"],
-                "attack_rating": float(row["attack_rating"]),
-                "defense_rating": float(row["defense_rating"])
-            })
+            teams.append(row["name"])
     return teams
 
-@app.get("/predict")
-def predict(team1: str, team2: str):
-    teams = get_teams()
+@app.get("/odds")
+def get_odds(team1: str, team2: str):
+    url = "https://api.the-odds-api.com/v4/sports/soccer_italy_serie_a/odds"
 
-    # 🔒 sicurezza: evita crash
-    t1 = next((t for t in teams if t["name"] == team1), None)
-    t2 = next((t for t in teams if t["name"] == team2), None)
-
-    if not t1 or not t2:
-        return {"error": "Squadra non trovata"}
-
-    # ⚽ forza squadre
-    strength1 = t1["attack_rating"] - t2["defense_rating"]
-    strength2 = t2["attack_rating"] - t1["defense_rating"]
-
-    prob1 = 1 / (1 + math.exp(-strength1))
-    prob2 = 1 / (1 + math.exp(-strength2))
-    draw_prob = 1 - abs(prob1 - prob2)
-
-    total = prob1 + prob2 + draw_prob
-    prob1 /= total
-    prob2 /= total
-    draw_prob /= total
-
-    odds1 = round(1 / prob1, 2)
-    oddsX = round(1 / draw_prob, 2)
-    odds2 = round(1 / prob2, 2)
-
-    # OVER/UNDER
-    expected_goals = (t1["attack_rating"] + t2["attack_rating"]) / 2
-
-    over25_prob = min(0.9, expected_goals / 3)
-    under25_prob = 1 - over25_prob
-
-    odds_over = round(1 / over25_prob, 2)
-    odds_under = round(1 / under25_prob, 2)
-
-    # marcatori fake
-    players = {
-        team1: ["Attaccante 1", "Attaccante 2"],
-        team2: ["Attaccante A", "Attaccante B"]
+    params = {
+        "apiKey": API_KEY,
+        "regions": "eu",
+        "markets": "h2h"
     }
 
-    scorer = random.choice(players[team1])
+    response = requests.get(url, params=params)
+    data = response.json()
 
-    return {
-        "match": f"{team1} vs {team2}",
-        "odds": {
-            "1": odds1,
-            "X": oddsX,
-            "2": odds2
-        },
-        "over_under": {
-            "over_2_5": odds_over,
-            "under_2_5": odds_under
-        },
-        "top_scorer_prediction": scorer
-    }
+    results = []
+
+    for match in data:
+        # match più preciso
+        if team1.lower() in match["home_team"].lower() or team2.lower() in match["away_team"].lower():
+
+            for book in match["bookmakers"]:
+                outcomes = book["markets"][0]["outcomes"]
+
+                results.append({
+                    "bookmaker": book["title"],
+                    "odds": outcomes
+                })
+
+    return results
