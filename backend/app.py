@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import csv
 import requests
+import os
 
 app = FastAPI()
 
-# CORS (fondamentale)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,53 +13,71 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-API_KEY = "f84e543d890f114b97d7e972b08a4c3b"
+ODDS_API_KEY = os.getenv("ODDS_API_KEY", "INSERISCI_ODDS_KEY")
+FOOTBALL_DATA_KEY = os.getenv("FOOTBALL_DATA_KEY", "INSERISCI_FOOTBALL_DATA_KEY")
 
 @app.get("/")
 def home():
     return {"message": "QuotaFootball API attiva"}
 
 @app.get("/teams")
-def get_teams():
+def get_teams(season: int = 2025):
+    url = f"https://api.football-data.org/v4/competitions/SA/teams?season={season}"
+    headers = {"X-Auth-Token": FOOTBALL_DATA_KEY}
+
     try:
+        response = requests.get(url, headers=headers, timeout=10)
+        data = response.json()
+
         teams = []
-        with open("data/teams.csv", newline='', encoding="utf-8") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                teams.append(row["name"])
-        return teams
-    except:
-        # fallback se file non letto
-        return ["Inter", "Juventus", "Milan", "Roma", "Napoli"]
+        for item in data.get("teams", []):
+            teams.append({
+                "name": item.get("name"),
+                "shortName": item.get("shortName"),
+                "crest": item.get("crest")
+            })
+
+        return {"season": season, "teams": teams}
+
+    except Exception as e:
+        return {"error": str(e), "teams": []}
 
 @app.get("/odds")
 def get_odds(team1: str, team2: str):
+    url = "https://api.the-odds-api.com/v4/sports/soccer_italy_serie_a/odds"
+
+    params = {
+        "apiKey": ODDS_API_KEY,
+        "regions": "eu",
+        "markets": "h2h",
+        "oddsFormat": "decimal"
+    }
+
     try:
-        url = "https://api.the-odds-api.com/v4/sports/soccer_italy_serie_a/odds"
-
-        params = {
-            "apiKey": API_KEY,
-            "regions": "eu",
-            "markets": "h2h"
-        }
-
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         data = response.json()
+
+        if isinstance(data, dict) and "message" in data:
+            return {"error": data["message"], "results": []}
 
         results = []
 
         for match in data:
-            if team1.lower() in match["home_team"].lower() or team2.lower() in match["away_team"].lower():
+            home = match.get("home_team", "")
+            away = match.get("away_team", "")
 
-                for book in match["bookmakers"]:
-                    outcomes = book["markets"][0]["outcomes"]
+            if team1.lower() in home.lower() and team2.lower() in away.lower() or team2.lower() in home.lower() and team1.lower() in away.lower():
+                for bookmaker in match.get("bookmakers", []):
+                    markets = bookmaker.get("markets", [])
+                    if not markets:
+                        continue
 
                     results.append({
-                        "bookmaker": book["title"],
-                        "odds": outcomes
+                        "bookmaker": bookmaker.get("title"),
+                        "odds": markets[0].get("outcomes", [])
                     })
 
-        return results
+        return {"results": results}
 
-    except:
-        return []
+    except Exception as e:
+        return {"error": str(e), "results": []}
