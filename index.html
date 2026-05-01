@@ -7,102 +7,96 @@
 
 <h1>QuotaFootball ⚽</h1>
 
+<label>Stagione:</label>
+<select id="season" onchange="loadTeams()">
+  <option value="2025">2025/2026</option>
+  <option value="2024">2024/2025</option>
+  <option value="2023">2023/2024</option>
+</select>
+
+<br><br>
+
 <select id="team1"></select>
 <select id="team2"></select>
 
 <br><br>
 
-<button onclick="getOdds()">Predici</button>
+<button onclick="getOdds()">Mostra Quote</button>
 
 <div id="result"></div>
 
 <script>
 const API_URL = "https://quotafootball-production.up.railway.app";
 
-// LOGHI
-const logos = {
-  "Bet365": "https://upload.wikimedia.org/wikipedia/en/6/6b/Bet365_logo.svg",
-  "William Hill": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/William_Hill_logo.svg/512px-William_Hill_logo.svg.png",
-  "Betfair": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Betfair_logo.svg/512px-Betfair_logo.svg.png"
-};
-
-// 🔥 FUNZIONE CARICAMENTO SQUADRE (FIXATA)
 async function loadTeams() {
-  try {
-    console.log("Carico squadre...");
+  const season = document.getElementById("season").value;
+  const team1 = document.getElementById("team1");
+  const team2 = document.getElementById("team2");
 
-    const res = await fetch(API_URL + "/teams");
+  team1.innerHTML = "";
+  team2.innerHTML = "";
 
-    if (!res.ok) {
-      throw new Error("Errore API");
-    }
+  const res = await fetch(`${API_URL}/teams?season=${season}`);
+  const data = await res.json();
 
-    const teams = await res.json();
-
-    console.log("Teams:", teams);
-
-    const t1 = document.getElementById("team1");
-    const t2 = document.getElementById("team2");
-
-    t1.innerHTML = "";
-    t2.innerHTML = "";
-
-    teams.forEach(team => {
-      let opt1 = document.createElement("option");
-      opt1.value = team;
-      opt1.textContent = team;
-
-      let opt2 = document.createElement("option");
-      opt2.value = team;
-      opt2.textContent = team;
-
-      t1.appendChild(opt1);
-      t2.appendChild(opt2);
-    });
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("result").innerText = "Errore caricamento squadre";
+  if (!data.teams || data.teams.length === 0) {
+    document.getElementById("result").innerHTML = "Nessuna squadra trovata.";
+    return;
   }
+
+  data.teams.forEach(team => {
+    team1.add(new Option(team.shortName || team.name, team.name));
+    team2.add(new Option(team.shortName || team.name, team.name));
+  });
+
+  team2.selectedIndex = 1;
 }
 
-// 🔥 FUNZIONE QUOTE
 async function getOdds() {
   const team1 = document.getElementById("team1").value;
   const team2 = document.getElementById("team2").value;
+  const result = document.getElementById("result");
 
-  try {
-    const res = await fetch(`${API_URL}/odds?team1=${team1}&team2=${team2}`);
-    const data = await res.json();
-
-    let html = "";
-
-    if (!data || data.length === 0) {
-      html = "Nessuna quota trovata";
-    } else {
-      data.forEach(book => {
-        const logo = logos[book.bookmaker] || "";
-
-        html += `
-          <div style="margin-bottom:20px;">
-            <img src="${logo}" width="60"><br>
-            <b>${book.bookmaker}</b><br>
-            1: ${book.odds[0].price} |
-            X: ${book.odds[1].price} |
-            2: ${book.odds[2].price}
-          </div>
-        `;
-      });
-    }
-
-    document.getElementById("result").innerHTML = html;
-
-  } catch (err) {
-    document.getElementById("result").innerText = "Errore nel collegamento API";
+  if (team1 === team2) {
+    result.innerHTML = "Seleziona due squadre diverse.";
+    return;
   }
+
+  result.innerHTML = "Caricamento quote...";
+
+  const res = await fetch(
+    `${API_URL}/odds?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`
+  );
+
+  const data = await res.json();
+
+  if (data.error) {
+    result.innerHTML = "Errore quote: " + data.error;
+    return;
+  }
+
+  if (!data.results || data.results.length === 0) {
+    result.innerHTML = "Nessuna quota trovata per questa partita.";
+    return;
+  }
+
+  let html = `<h2>${team1} vs ${team2}</h2>`;
+
+  data.results.forEach(book => {
+    html += `<div style="margin:15px;padding:15px;background:#eee;border-radius:10px;">
+      <strong>${book.bookmaker}</strong><br>
+    `;
+
+    book.odds.forEach(odd => {
+      html += `${odd.name}: ${odd.price}<br>`;
+    });
+
+    html += `</div>`;
+  });
+
+  result.innerHTML = html;
 }
 
-// AVVIO
 loadTeams();
 </script>
 
