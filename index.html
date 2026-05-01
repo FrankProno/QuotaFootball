@@ -47,18 +47,19 @@ async function predict() {
   const team1 = document.getElementById("team1").value;
   const team2 = document.getElementById("team2").value;
 
-  try {
-    const response = await fetch(
-      API_URL + "/predict?team1=" + team1 + "&team2=" + team2
-    );
+  const res = await fetch(
+    API_URL + "/predict?team1=" + team1 + "&team2=" + team2
+  );
 
-    const data = await response.json();
+  const data = await res.json();
 
-    document.getElementById("result").innerText =
-      data.match + " → " + data.prediction + " (" + data.confidence + ")";
-  } catch (error) {
-    document.getElementById("result").innerText = "Errore nel collegamento API";
-  }
+  document.getElementById("result").innerHTML = `
+    <h3>${data.match}</h3>
+    <p>🏆 Quote</p>
+    <p>1: ${data.odds["1"]}</p>
+    <p>X: ${data.odds["X"]}</p>
+    <p>2: ${data.odds["2"]}</p>
+  `;
 }
 
 loadTeams();
