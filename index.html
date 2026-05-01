@@ -10,70 +10,78 @@
 <select id="team1"></select>
 <select id="team2"></select>
 
-<button onclick="predict()">Predici</button>
+<br><br>
 
-<p id="result"></p>
+<button onclick="getOdds()">Predici</button>
+
+<div id="result"></div>
 
 <script>
 const API_URL = "https://quotafootball-production.up.railway.app";
 
+const logos = {
+  "Bet365": "https://upload.wikimedia.org/wikipedia/en/6/6b/Bet365_logo.svg",
+  "William Hill": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5c/William_Hill_logo.svg/512px-William_Hill_logo.svg.png",
+  "Betfair": "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Betfair_logo.svg/512px-Betfair_logo.svg.png",
+  "Unibet": "https://upload.wikimedia.org/wikipedia/en/thumb/1/1b/Unibet_logo.svg/512px-Unibet_logo.svg.png"
+};
+
 async function loadTeams() {
   try {
-    console.log("Carico squadre...");
+    const res = await fetch(API_URL + "/teams");
+    const teams = await res.json();
 
-    const response = await fetch(API_URL + "/teams");
+    const t1 = document.getElementById("team1");
+    const t2 = document.getElementById("team2");
 
-    if (!response.ok) {
-      throw new Error("Errore risposta API");
-    }
-
-    const teams = await response.json();
-
-    console.log("Squadre:", teams);
-
-    const team1Select = document.getElementById("team1");
-    const team2Select = document.getElementById("team2");
-
-    // pulisce menu (importante)
-    team1Select.innerHTML = "";
-    team2Select.innerHTML = "";
+    t1.innerHTML = "";
+    t2.innerHTML = "";
 
     teams.forEach(team => {
-      const opt1 = document.createElement("option");
-      opt1.value = team.name;
-      opt1.textContent = team.name;
-
-      const opt2 = document.createElement("option");
-      opt2.value = team.name;
-      opt2.textContent = team.name;
-
-      team1Select.appendChild(opt1);
-      team2Select.appendChild(opt2);
+      let opt1 = new Option(team, team);
+      let opt2 = new Option(team, team);
+      t1.add(opt1);
+      t2.add(opt2);
     });
 
-  } catch (error) {
-    console.error("Errore loadTeams:", error);
+  } catch (err) {
     document.getElementById("result").innerText = "Errore caricamento squadre";
   }
 }
 
-async function predict() {
+async function getOdds() {
   const team1 = document.getElementById("team1").value;
   const team2 = document.getElementById("team2").value;
 
-  const res = await fetch(
-    API_URL + "/predict?team1=" + team1 + "&team2=" + team2
-  );
+  try {
+    const res = await fetch(`${API_URL}/odds?team1=${team1}&team2=${team2}`);
+    const data = await res.json();
 
-  const data = await res.json();
+    let html = "";
 
-  document.getElementById("result").innerHTML = `
-    <h3>${data.match}</h3>
-    <p>🏆 Quote</p>
-    <p>1: ${data.odds["1"]}</p>
-    <p>X: ${data.odds["X"]}</p>
-    <p>2: ${data.odds["2"]}</p>
-  `;
+    if (!data || data.length === 0) {
+      html = "Nessuna quota trovata";
+    } else {
+      data.forEach(book => {
+        const logo = logos[book.bookmaker] || "";
+
+        html += `
+          <div style="margin-bottom:20px;">
+            <img src="${logo}" width="60"><br>
+            <b>${book.bookmaker}</b><br>
+            1: ${book.odds[0].price} |
+            X: ${book.odds[1].price} |
+            2: ${book.odds[2].price}
+          </div>
+        `;
+      });
+    }
+
+    document.getElementById("result").innerHTML = html;
+
+  } catch (err) {
+    document.getElementById("result").innerText = "Errore nel collegamento API";
+  }
 }
 
 loadTeams();
