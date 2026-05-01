@@ -19,26 +19,40 @@ const API_URL = "https://quotafootball-production.up.railway.app";
 
 async function loadTeams() {
   try {
+    console.log("Carico squadre...");
+
     const response = await fetch(API_URL + "/teams");
+
+    if (!response.ok) {
+      throw new Error("Errore risposta API");
+    }
+
     const teams = await response.json();
+
+    console.log("Squadre:", teams);
 
     const team1Select = document.getElementById("team1");
     const team2Select = document.getElementById("team2");
 
+    // pulisce menu (importante)
+    team1Select.innerHTML = "";
+    team2Select.innerHTML = "";
+
     teams.forEach(team => {
-      const option1 = document.createElement("option");
-      option1.value = team.name;
-      option1.text = team.name;
+      const opt1 = document.createElement("option");
+      opt1.value = team.name;
+      opt1.textContent = team.name;
 
-      const option2 = document.createElement("option");
-      option2.value = team.name;
-      option2.text = team.name;
+      const opt2 = document.createElement("option");
+      opt2.value = team.name;
+      opt2.textContent = team.name;
 
-      team1Select.appendChild(option1);
-      team2Select.appendChild(option2);
+      team1Select.appendChild(opt1);
+      team2Select.appendChild(opt2);
     });
 
   } catch (error) {
+    console.error("Errore loadTeams:", error);
     document.getElementById("result").innerText = "Errore caricamento squadre";
   }
 }
