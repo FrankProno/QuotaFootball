@@ -16,14 +16,27 @@
 
 <script>
 async function predict() {
-  const t1 = document.getElementById("team1").value;
-  const t2 = document.getElementById("team2").value;
+  const team1 = document.getElementById("team1").value;
+  const team2 = document.getElementById("team2").value;
 
-  const res = await fetch(`https://quotacalcio-produzione.up.railway.app/predict?team1=${t1}&team2=${t2}`);
+  const res = await fetch(
+    API_URL + "/predict?team1=" + team1 + "&team2=" + team2
+  );
+
   const data = await res.json();
 
-  document.getElementById("result").innerText =
-    data.prediction + " (" + data.confidence + ")";
+  document.getElementById("result").innerHTML = `
+    <h3>${data.match}</h3>
+
+    <h4>🏆 1X2</h4>
+    <p>1: ${data.odds["1"]} | X: ${data.odds["X"]} | 2: ${data.odds["2"]}</p>
+
+    <h4>⚽ Over/Under 2.5</h4>
+    <p>Over: ${data.over_under.over_2_5} | Under: ${data.over_under.under_2_5}</p>
+
+    <h4>🔥 Possibile marcatore</h4>
+    <p>${data.top_scorer_prediction}</p>
+  `;
 }
 </script>
 
